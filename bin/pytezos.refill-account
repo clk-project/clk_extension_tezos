@@ -1,0 +1,59 @@
+#!/bin/bash -eu
+
+source "_clk.sh"
+
+clk_usage () {
+    cat<<EOF
+$0
+
+Refill the given account with tezzies
+--
+O:--address:str:The address to refill
+O:--amount:int:The amount to refill:1000000
+flowdepends: pytezos.build-docker-image
+EOF
+}
+
+clk_help_handler "$@"
+
+if [ -z "${CLK___ADDRESS}" ]
+then
+    CLK___ADDRESS="$(clk tss get-address)"
+fi
+
+
+TMP="$(mktemp -d)"
+trap "rm -rf '${TMP}'" 0
+
+cat <<EOF > "${TMP}/refill.py"
+from pytezos import pytezos
+p = pytezos.using(key={
+  "mnemonic": [
+    "bike",
+    "scan",
+    "height",
+    "drum",
+    "tackle",
+    "sauce",
+    "pilot",
+    "prefer",
+    "pulse",
+    "master",
+    "more",
+    "enroll",
+    "torch",
+    "south",
+    "alien"
+  ],
+  "secret": "2e66e90d05e21e6b5b7bc7a142220c52fe7f1034",
+  "amount": "99497153327",
+  "pkh": "tz1NfNNPhwT6CHFRpaU89HR7pDQHAKj1gj1B",
+  "password": "64G981qa97",
+  "email": "nxdqtwyp.pmivamye@tezos.example.org"
+}
+)
+print(p.transaction("${CLK___ADDRESS}", ${CLK___AMOUNT}).autofill().sign().inject(min_confirmations=1))
+EOF
+
+
+docker run -v "${TMP}":/src --name "$(basename "${0}")" --rm -ti pytezos-helper python /src/refill.py

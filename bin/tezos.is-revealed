@@ -1,0 +1,23 @@
+#!/bin/bash -eu
+
+source "_clk.sh"
+
+clk_usage () {
+    cat<<EOF
+$0
+
+Find out whether the given address is revealed
+--
+O:--address:str:The address to refill
+EOF
+}
+
+clk_help_handler "$@"
+
+if [ -z "${CLK___ADDRESS}" ]
+then
+    CLK___ADDRESS="$(clk tss get-address)"
+fi
+
+
+[ "$(http "https://api.granada.tzstats.com/explorer/account/${CLK___ADDRESS}"|jq -r .is_revealed)" == "true" ]

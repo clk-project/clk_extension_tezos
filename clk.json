@@ -1,0 +1,21 @@
+{
+    "alias": {
+        "pytezos.ipython": {
+            "commands": [
+                [
+                    "exec",
+                    "docker",
+                    "run",
+                    "--name",
+                    "pytezos-test",
+                    "--rm",
+                    "-ti",
+                    "pytezos-test",
+                    "ipython"
+                ]
+            ],
+            "documentation": null
+        }
+    },
+    "parameters": {}
+}

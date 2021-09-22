@@ -1,0 +1,18 @@
+#!/bin/bash -eu
+
+source "_clk.sh"
+
+clk_usage () {
+    cat<<EOF
+$0
+
+Build a docker image to play with pytezos
+--
+EOF
+}
+
+clk_help_handler "$@"
+
+CONTEXT="$(dirname "$(dirname "$0")")/pytezos"
+
+clk exec --in-project docker build -t pytezos-helper "${CONTEXT}"

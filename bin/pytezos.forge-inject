@@ -1,0 +1,45 @@
+#!/bin/bash -eu
+
+source "_clk.sh"
+
+clk_usage () {
+    cat<<EOF
+$0
+
+Forge and inject transactions using pytezos
+--
+O:--public-key:str:The public key to use
+flowdepends: tss.refill
+EOF
+}
+
+clk_help_handler "$@"
+
+if [ -z "${CLK___PUBLIC_KEY}" ]
+then
+    CLK___PUBLIC_KEY="$(clk tss get-public-key)"
+fi
+
+address="$(clk tezos compute-address "${CLK___PUBLIC_KEY}")"
+
+TMP="$(mktemp -d)"
+trap "rm -rf '${TMP}'" 0
+
+cat <<EOF > "${TMP}/main.py"
+from pytezos import crypto
+import base64
+import sys
+from pytezos import pytezos
+k = crypto.key.Key(public_point=base64.b64decode("${CLK___PUBLIC_KEY}"))
+p2 = pytezos.using(key=k)
+print(p2.key.public_key_hash())
+c = p2.contract("KT1VkcKXZjvYDvV9atndsFnn9PgLc2jvv1wV")
+a = p2.bulk(c.transfer("${address}", "tz1NfNNPhwT6CHFRpaU89HR7pDQHAKj1gj1B", 10)).autofill()
+print(a.forge(True))
+print("Signature:")
+signed = sys.stdin.readline().strip()
+a.signature = signed
+print(a.inject())
+EOF
+
+docker run -v "${TMP}":/src --name "$(basename "${0}")" --rm -ti pytezos-helper python /src/main.py
