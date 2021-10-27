@@ -21,14 +21,18 @@ def tezos():
     "Commands to play with tezos"
 
 
-@tezos.command()
-@argument("publickeyb64", help="The base64 representation of the public key")
-def compute_address(publickeyb64):
-    "Compute some tezos address, provided the public key"
-    public_key = base64.b64decode(publickeyb64.encode())
+def compute_address(public_key):
     pkh = blake2b(data=public_key, digest_size=20).digest()
     # tz1
-    print(base58.b58encode_check(tb([6, 161, 159]) + pkh).decode())
+    return base58.b58encode_check(tb([6, 161, 159]) + pkh).decode()
+
+
+@tezos.command()
+@argument("publickeyb64", help="The base64 representation of the public key")
+def _compute_address(publickeyb64):
+    "Compute some tezos address, provided the public key"
+    public_key = base64.b64decode(publickeyb64.encode())
+    print(compute_address(public_key))
 
 
 def encode_signature(message):
