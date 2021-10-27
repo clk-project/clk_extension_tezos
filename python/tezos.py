@@ -58,3 +58,9 @@ def compute_public_key(publickeyb64):
 def _digest(messageb64):
     """Compute the digest to sign, provided the (forged) message"""
     print(digest(messageb64))
+
+
+@tezos.command()
+@argument("signatureb64")
+def _encode_signature(signatureb64):
+    print(encode_signature(base64.b64decode(signatureb64)))
