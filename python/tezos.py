@@ -61,6 +61,7 @@ def _digest(messageb64):
 
 
 @tezos.command()
-@argument("signatureb64")
+@argument("signatureb64", help="The base64 encode signature to encode")
 def _encode_signature(signatureb64):
+    "Dumps the encoded version of the signature"
     print(encode_signature(base64.b64decode(signatureb64)))
