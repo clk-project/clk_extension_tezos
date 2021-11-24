@@ -1,0 +1,43 @@
+#!/bin/bash -eu
+
+source "_clk.sh"
+
+clk_usage () {
+    cat<<EOF
+$0
+
+Reveal the given public key
+--
+O:--public-key:str:The public key to use
+EOF
+}
+
+clk_help_handler "$@"
+
+if [ -z "${CLK___PUBLIC_KEY}" ]
+then
+    CLK___PUBLIC_KEY="$(clk tss get-public-key)"
+fi
+address="$(clk tezos compute-address "${CLK___PUBLIC_KEY}")"
+clk log -l info "The address I found out is: ${address}"
+
+if clk tezos is-revealed --address "${address}"
+then
+    clk log -l status "Already revealed"
+    exit 0
+fi
+
+TMP="$(mktemp -d)"
+trap "rm -rf '${TMP}'" 0
+
+cat <<EOF > "${TMP}/main.py"
+from pytezos import crypto
+import base64
+from pytezos import pytezos
+k = crypto.key.Key(public_point=base64.b64decode("${CLK___PUBLIC_KEY}"))
+p2 = pytezos.using(key=k)
+print(p2.reveal().autofill().sign().inject(min_confirmations=1))
+EOF
+
+echo "About to reveal, please sign the following base64 encoded forge and paste back the tezos signed forge in base64"
+docker run -v "${TMP}":/src --name "$(basename "${0}")" --rm -ti pytezos-helper python /src/main.py
