@@ -1,0 +1,49 @@
+#!/bin/bash -eu
+
+source "_clk.sh"
+
+clk_usage () {
+    cat<<EOF
+$0
+
+Refill the given account
+--
+flowdepends: pytezos.build-docker-image
+O:--address:str:The address to refill
+O:--public-key:str:The public key to refill
+EOF
+}
+
+clk_help_handler "$@"
+
+if [ -n "${CLK___PUBLIC_KEY}" ]
+then
+    ADDRESS="$(clk tezos compute-address "${CLK___PUBLIC_KEY}")"
+    if [ -z "${CLK___ADDRESS}" ]
+    then
+        CLK___ADDRESS="${ADDRESS}"
+    fi
+fi
+
+if [ -n "${CLK___ADDRESS}" ]
+then
+    if [ -n "${ADDRESS}" ] && [ "${ADDRESS}" != "${CLK___ADDRESS}" ]
+    then
+        echo "Address mismatch: ${ADDRESS} != ${CLK___ADDRESS}"
+        exit 1
+    fi
+    ADDRESS="${CLK___ADDRESS}"
+else
+    echo "Either --address or --public-key is needed"
+    exit 1
+fi
+
+args=()
+if [ -n "${ADDRESS}" ]
+then
+    args+=(--address ${ADDRESS})
+fi
+clk log -l info "Will refill the address: ${ADDRESS}"
+
+clk pytezos refill-account "${args[@]}"
+clk pytezos refill-token "${args[@]}"
